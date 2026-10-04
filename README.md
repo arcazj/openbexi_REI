@@ -8,6 +8,12 @@ A compact workspace for an REI fellow developing a research project: explore evi
 
 The demo needs no installation or key. Search PubMed/Ensembl, try the labeled example workspace, and save/export manual briefs. AI and GWAS Catalog require the local Python version.
 
+## Install on Windows
+
+**[Download the Windows installer](https://github.com/arcazj/openbexi_REI/releases/download/v1.0.0/REIResearchExplorer-1.0.0-Windows-x64-Setup.exe)** for Windows 10/11, 64-bit. Run Setup, then launch **REI Research Explorer** from the Start menu or desktop. Python and dependencies are included; administrator access is not required. The app opens in your default browser. Use its tray menu to reopen or quit it. Enter your own API key through **Connect AI** when needed.
+
+Private settings survive updates/uninstall. This installer is unsigned; Windows may show an unknown-publisher warning. See [Windows installation help](WINDOWS_INSTALLATION.md) for troubleshooting, private-data locations, and build instructions.
+
 ## Run locally
 
 Requirements: Python 3.9+, a modern browser, and internet for live sources. The HTML has no build step.

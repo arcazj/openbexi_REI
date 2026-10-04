@@ -14,6 +14,9 @@ node_modules/
 test-results/
 playwright-report/
 _site/
+build/
+dist/
+.build-venv/
 *.log
 Thumbs.db
 .DS_Store

@@ -1,5 +1,12 @@
 # Releases
 
+## Windows installer for V1.0
+
+- Self-contained x64 Windows 10/11 installer with bundled Python/runtime dependencies, per-user installation, Start menu/desktop shortcuts, and uninstall registration.
+- Browser launch and native tray Open/Quit controls; singleton instance, remembered port, and loopback-only server.
+- Credentials in a separate private user folder. Updates and uninstall preserve private settings, browser research, and added user files.
+- Automated Windows build and actual install/runtime/update/uninstall checks; public packages omit local keys, workspace data, and IDE files.
+
 ## V1.0 — 2026-10-04
 
 - Compact silver, sage, blue, and lavender UI; one AI status in the header and AI settings on the right.

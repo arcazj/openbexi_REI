@@ -34,6 +34,10 @@ OpenAI's hosted API and public data providers have separate service and data-reu
 
 Versions match `requirements.lock.txt`. Package metadata and included license files are the basis of this inventory; recheck additions and updates before redistribution.
 
+## Windows installer/runtime
+
+The Windows installer additionally bundles CPython 3.12 and the PyInstaller bootloader. The exact runtime/build versions and source commit are recorded in the installed `BUILD-INFO.json`. Full Python and PyInstaller license texts (including PyInstaller's bootloader exception) are bundled in the installed `licenses` folder. Installer construction uses NSIS with zlib compression; its full license text is preserved there as well. NSIS, PyInstaller, and compiler tools are build dependencies, while Python and application runtime dependencies are included for users. These component licenses do not select a license for the original project code.
+
 ## Optional browser-check tooling
 
 Playwright and playwright-core **1.60.0** are development-only dependencies pinned in `package-lock.json`, under Apache-2.0. They are not needed by, or bundled into, the standalone HTML. Preserved texts: [Playwright license](licenses/playwright-license.txt), [notice](licenses/playwright-notice.txt), [third-party notices](licenses/playwright-third-party-notices.txt), [playwright-core license](licenses/playwright-core-license.txt), [notice](licenses/playwright-core-notice.txt), and [third-party notices](licenses/playwright-core-third-party-notices.txt). Browser executables installed for checks have their own included notices and are not redistributed in project packages.

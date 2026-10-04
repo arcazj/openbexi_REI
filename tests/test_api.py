@@ -168,6 +168,23 @@ class APIBoundaryTests(unittest.TestCase):
                 self.assertNotIn(fake_key, health.text)
                 check.assert_not_awaited()
 
+    def test_installed_key_is_saved_in_private_profile_and_not_packaged_assets(self):
+        fake_key = "sk-installed-fixture-private-only"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            assets = root / "installed-assets"
+            private = root / "private-profile"
+            assets.mkdir()
+            private.mkdir()
+            (assets / ".env").write_text("DO_NOT_CHANGE=asset-fixture\n", encoding="utf-8")
+            with patch.object(application_module, "ROOT", assets), patch.dict(os.environ, {"REI_DATA_DIR": str(private)}):
+                response = self.client.post("/api/ai/configure", json={"api_key": fake_key})
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertNotIn(fake_key, response.text)
+                self.assertIn(fake_key, (private / ".env").read_text(encoding="utf-8"))
+                self.assertEqual((assets / ".env").read_text(encoding="utf-8"), "DO_NOT_CHANGE=asset-fixture\n")
+
+
     def test_invalid_key_configuration_never_changes_disk_or_environment(self):
         invalid_values = ["", "sk-short", "not-an-openai-key-that-is-long-enough", "sk-" + "x" * 510, "sk-fixture-key\nwith-control-characters"]
         with tempfile.TemporaryDirectory() as directory:

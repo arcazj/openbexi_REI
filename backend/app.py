@@ -21,14 +21,22 @@ from . import ai
 from .sources import SOURCE_INFO, SourceService, interpret, utc_now
 
 ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(ROOT / ".env", override=False)
+
+
+def configuration_path():
+    # The installed app keeps credentials separate from bundled files/upgrades.
+    directory = os.getenv("REI_DATA_DIR", "").strip()
+    return (Path(directory).resolve() if directory else ROOT) / ".env"
+
+
+load_dotenv(configuration_path(), override=False)
 VERSION = "1.0.0"
 # The standalone launcher can select any free local port. Keep browser access
 # limited to exact loopback HTTP origins, using one policy for CORS and POSTs.
 LOCAL_PORT_PATTERN = r"(?:[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])"
 LOCAL_ORIGIN_PATTERN = rf"http://(?:localhost|127\.0\.0\.1)(?::{LOCAL_PORT_PATTERN})?"
 LOCAL_ORIGIN = re.compile(LOCAL_ORIGIN_PATTERN)
-DOC_FILES = {"README.md", "CHANGELOG.md", "HELP.md", "COMMERCIAL_LICENSING.md", "THIRD_PARTY_NOTICES.md", "REI_RESEARCH_EXPLORER_PROMPT.md", "LICENSE"}
+DOC_FILES = {"README.md", "CHANGELOG.md", "WINDOWS_INSTALLATION.md", "HELP.md", "COMMERCIAL_LICENSING.md", "THIRD_PARTY_NOTICES.md", "REI_RESEARCH_EXPLORER_PROMPT.md", "LICENSE"}
 
 
 class SearchRequest(BaseModel):
@@ -118,7 +126,10 @@ async def validation_error(request: Request, exc: RequestValidationError):
 
 @app.get("/api/health")
 async def health():
-    return {"version": VERSION, "ai": {"configured": ai.configured(), "model": ai.model_name()}, "sources": SOURCE_INFO}
+    result = {"version": VERSION, "ai": {"configured": ai.configured(), "model": ai.model_name()}, "sources": SOURCE_INFO}
+    if os.getenv("REI_DESKTOP_INSTANCE"):
+        result["desktop"] = {"managed": True, "instance_id": os.environ["REI_DESKTOP_INSTANCE"]}
+    return result
 
 
 @app.post("/api/search")
@@ -158,9 +169,9 @@ async def ai_configure(configuration: AIConfigureRequest, request: Request):
         raise HTTPException(403, "API keys can only be configured from this computer.")
     key = configuration.api_key.get_secret_value()
     try:
-        set_key(str(ROOT / ".env"), "OPENAI_API_KEY", key, quote_mode="always")
+        set_key(str(configuration_path()), "OPENAI_API_KEY", key, quote_mode="always")
     except Exception:
-        raise HTTPException(500, "Could not save the API key. Check that the project directory and .env are writable, then try again.") from None
+        raise HTTPException(500, "Could not save the API key. Check that the private settings folder and .env are writable, then try again.") from None
     # Refresh this process only after the file has been written successfully.
     # The key never appears in a response or goes into browser storage.
     os.environ["OPENAI_API_KEY"] = key

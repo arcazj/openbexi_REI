@@ -1,0 +1,28 @@
+REI Research Explorer V1.0 — Windows
+
+Requires Windows 10 or 11, 64-bit, a modern browser, and internet for live data.
+The installer includes Python and dependencies. No administrator access or API key
+is needed to install or browse public evidence.
+
+Launch from the Start menu or desktop shortcut. The workspace opens in your default
+browser. In the notification area, use the REI tray icon to reopen the workspace or
+Quit. Closing the browser tab leaves the local app running.
+
+To enable AI, click Connect AI inside the app, enter your own OpenAI key, and select
+Save key & connect. OpenAI API usage is metered. No key is included in this package.
+
+Private settings: %LOCALAPPDATA%\REIResearchExplorer
+Application files: %LOCALAPPDATA%\Programs\REIResearchExplorer (default)
+Saved briefs remain in your browser; export JSON backups regularly. The app remembers
+its local port. A port conflict may require a new browser origin; import a JSON backup
+if saved briefs are absent at that address.
+
+Uninstall through Windows Settings > Apps > REI Research Explorer. Uninstall keeps
+private settings and browser research so a later installation can restore them.
+
+This release is unsigned. Windows may show an unknown-publisher/SmartScreen warning.
+Download only from the project GitHub release. Company policies may require IT approval.
+Original-code licensing remains pending owner selection. Consult commercial-use and
+third-party notices before commercial redistribution.
+
+Help: https://github.com/arcazj/openbexi_REI#install-on-windows

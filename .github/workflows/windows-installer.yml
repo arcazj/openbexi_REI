@@ -1,0 +1,46 @@
+name: Windows installer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'installer/**'
+      - 'scripts/build_windows.py'
+      - 'scripts/test_windows_install.py'
+      - 'backend/**'
+      - 'requirements.lock.txt'
+      - 'index.html'
+      - 'licenses/**'
+      - '*.md'
+      - '.github/workflows/windows-installer.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+          cache: pip
+          cache-dependency-path: |
+            requirements.lock.txt
+            installer/requirements-build.txt
+      - run: python -m pip install -r requirements.lock.txt -r installer/requirements-build.txt
+      - run: python -m unittest discover -s tests -v
+      - run: python -m scripts.build_windows
+      - run: python -m scripts.test_windows_install
+      - uses: actions/upload-artifact@v4
+        with:
+          name: REI-Windows-x64-Installer
+          path: |
+            dist/REIResearchExplorer-1.0.0-Windows-x64-Setup.exe
+            dist/SHA256SUMS-Windows.txt
+          if-no-files-found: error
+          retention-days: 30

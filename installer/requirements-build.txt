@@ -1,0 +1,2 @@
+# Build tools only; no need for these on a user's PC.
+pyinstaller==6.22.3

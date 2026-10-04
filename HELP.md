@@ -26,6 +26,8 @@ Saved research stays in this browser on this device. Export JSON for backup and 
 
 ## AI assistance
 
+On Windows 10/11 x64, the [self-contained installer](WINDOWS_INSTALLATION.md) supplies the local backend and opens the browser automatically. Use its tray menu to reopen/quit the app. Private keys live in `%LOCALAPPDATA%\REIResearchExplorer\.env`; installation updates preserve that folder.
+
 AI is optional and runs through the Python backend. The compact header shows verified access, missing credentials, and errors. Click **Connect AI**, then **Save key & connect**. The password field clears after submission; the local backend saves the key in ignored `.env` and checks model access without sending research evidence. No restart is needed. **AI settings** opens connection settings on the right; tap the short mobile status for full model details.
 
 After each completed live search, **Make the next step useful** and **Tip** use AI to offer one short next step and one contextual tip. The request contains up to 20 retrieved records, source coverage, research constraints, and up to three saved questions. Guidance is cached for the session until that context changes; it is not generated on every keystroke. **Refresh suggestions** requests another response; turn automatic guidance off in **AI settings** to use manual refresh only.
