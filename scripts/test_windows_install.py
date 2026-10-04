@@ -53,6 +53,10 @@ def smoke(setup, test_tray=False):
         def run(arguments, timeout=60):
             return subprocess.run(arguments, env=environment, timeout=timeout, check=True,
                                   creationflags=subprocess.CREATE_NO_WINDOW)
+        def install_package():
+            # NSIS requires its final /D argument without quotes, even for spaces.
+            # Pass the exact native command line, with no shell involved.
+            run(subprocess.list2cmdline([str(setup), "/S"]) + " /D=" + str(install))
         def start():
             return subprocess.Popen([str(executable), "--no-browser" if test_tray else "--headless", "--data-dir", str(private)],
                                     env=environment, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -68,7 +72,7 @@ def smoke(setup, test_tray=False):
             settings = json.loads((private / "desktop.json").read_text(encoding="utf-8"))
             return opener.open("http://127.0.0.1:" + str(settings["port"]) + path, timeout=5)
         try:
-            run([str(setup), "/S", "/D=" + str(install)])
+            install_package()
             wait_for(executable.is_file)
             assert (install / "Uninstall.exe").is_file()
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_name) as key:
@@ -111,7 +115,7 @@ def smoke(setup, test_tray=False):
             run([str(executable), "--quit", "--data-dir", str(private)], timeout=30)
             assert process.wait(timeout=20) == 0
             # Reinstall over the existing package; private configuration must survive.
-            run([str(setup), "/S", "/D=" + str(install)])
+            install_package()
             assert user_file.read_text(encoding="utf-8") == "Keep this user file."
             process = start()
             wait_for(ready)
