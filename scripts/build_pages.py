@@ -7,6 +7,7 @@ from pathlib import Path
 
 DOCUMENTS = (
     "README.md",
+    "CHANGELOG.md",
     "HELP.md",
     "REI_RESEARCH_EXPLORER_PROMPT.md",
     "COMMERCIAL_LICENSING.md",

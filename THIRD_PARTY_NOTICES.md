@@ -33,3 +33,7 @@ OpenAI's hosted API and public data providers have separate service and data-reu
 | uvicorn | 0.39.0 | BSD-3-Clause | [LICENSE.md](licenses/uvicorn-license.md.txt) |
 
 Versions match `requirements.lock.txt`. Package metadata and included license files are the basis of this inventory; recheck additions and updates before redistribution.
+
+## Optional browser-check tooling
+
+Playwright and playwright-core **1.60.0** are development-only dependencies pinned in `package-lock.json`, under Apache-2.0. They are not needed by, or bundled into, the standalone HTML. Preserved texts: [Playwright license](licenses/playwright-license.txt), [notice](licenses/playwright-notice.txt), [third-party notices](licenses/playwright-third-party-notices.txt), [playwright-core license](licenses/playwright-core-license.txt), [notice](licenses/playwright-core-notice.txt), and [third-party notices](licenses/playwright-core-third-party-notices.txt). Browser executables installed for checks have their own included notices and are not redistributed in project packages.

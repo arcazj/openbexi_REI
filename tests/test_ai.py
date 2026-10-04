@@ -25,6 +25,56 @@ def request():
     return ai.AIRequest(action="explain", query="ovarian aging", records=[evidence()])
 
 
+def guidance():
+    return ai.GuidanceResult(
+        next_step="Review the population in the supplied abstract [pubmed:123456].",
+        tip="Confirm available outcome data before choosing a design.",
+        refined_query="ovarian aging reproductive outcomes",
+        explanation="The supplied evidence is abstract-level [pubmed:123456]. Feasibility is unknown.",
+        citation_ids=["pubmed:123456"],
+        candidate_question=ai.CandidateQuestion(
+            title="Ovarian aging and reproductive outcomes", question="Is ovarian reserve associated with reproductive outcomes?",
+            population="Unknown", exposure="Ovarian reserve", outcome="Reproductive outcomes",
+            design="Unknown", required_data="Unknown", feasibility="Unknown", uncertainties="Verify with mentor",
+            rationale="Provisional question from the supplied evidence.", citations=["pubmed:123456"]),
+    )
+
+
+class GuidanceValidationTests(unittest.TestCase):
+    def test_guidance_reconstructs_citations_and_preserves_actionable_question(self):
+        result = ai.validate_guidance_result(guidance(), [evidence()])
+        self.assertEqual(result["refined_query"], "ovarian aging reproductive outcomes")
+        self.assertEqual(result["candidate_question"]["citations"], ["pubmed:123456"])
+        self.assertEqual(result["citations"][0]["url"], evidence().url)
+
+    def test_each_guidance_field_rejects_invented_links_and_citations(self):
+        for field in ("next_step", "tip", "refined_query", "explanation"):
+            for content in ("Claim [pubmed:999999].", "Open https://invented.example."):
+                with self.subTest(field=field, content=content):
+                    data = guidance().model_dump()
+                    data[field] = content
+                    with self.assertRaises(ValueError):
+                        ai.validate_guidance_result(ai.GuidanceResult(**data), [evidence()])
+
+    def test_uncited_proposed_question_and_oversized_brief_fields_are_rejected(self):
+        for change in ({"citations": []}, {"title": "x" * 241}, {"feasibility": ""}):
+            with self.subTest(change=change):
+                data = guidance().model_dump()
+                data["candidate_question"].update(change)
+                with self.assertRaises(ValueError):
+                    ai.validate_guidance_result(ai.GuidanceResult(**data), [evidence()])
+
+    def test_display_text_and_search_query_are_bounded(self):
+        for field, content in (("next_step", "x" * 481), ("tip", "x" * 481), ("refined_query", "x" * 251)):
+            with self.subTest(field=field):
+                with self.assertRaises(ValidationError):
+                    ai.GuidanceResult(**dict(guidance().model_dump(), **{field: content}))
+        data = guidance().model_dump()
+        data["refined_query"] = "ovarian\naging"
+        with self.assertRaises(ValueError):
+            ai.validate_guidance_result(ai.GuidanceResult(**data), [evidence()])
+
+
 class CitationValidationTests(unittest.TestCase):
     def test_supported_citations_use_source_urls_instead_of_generated_links(self):
         result = ai.AIResult(text="Limited evidence [pubmed:123456].", citation_ids=["pubmed:123456"], candidate_questions=[])
@@ -79,6 +129,25 @@ class CitationValidationTests(unittest.TestCase):
 
 
 class ResponsesContractTests(unittest.IsolatedAsyncioTestCase):
+    async def test_guidance_uses_its_structured_schema_and_exact_model_without_storage(self):
+        parsed = guidance()
+        client = SimpleNamespace(responses=SimpleNamespace(parse=AsyncMock(return_value=SimpleNamespace(output_parsed=parsed))))
+        context = MagicMock()
+        context.__aenter__ = AsyncMock(return_value=client)
+        context.__aexit__ = AsyncMock(return_value=False)
+        payload = ai.AIRequest(action="guidance", query="ovarian aging", records=[evidence()],
+                               constraints=ai.ResearchConstraints(data="Clinic registry"),
+                               questions=[{"question": "Saved fellowship question"}])
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "sk-fixture", "OPENAI_MODEL": "gpt-6.1-sol"}), patch.object(ai, "AsyncOpenAI", return_value=context):
+            result = await ai.generate(payload)
+        arguments = client.responses.parse.await_args.kwargs
+        self.assertEqual(arguments["model"], "gpt-6.1-sol")
+        self.assertIs(arguments["text_format"], ai.GuidanceResult)
+        self.assertFalse(arguments["store"])
+        self.assertEqual(result["evidence_snapshot"]["constraints"]["data"], "Clinic registry")
+        self.assertEqual(result["evidence_snapshot"]["questions"], payload.questions)
+        self.assertEqual(result["evidence_ids"], [evidence().id])
+
     async def test_missing_key_fails_before_constructing_openai_client(self):
         with patch.dict(os.environ, {"OPENAI_API_KEY": ""}), patch.object(ai, "AsyncOpenAI") as constructor:
             with self.assertRaises(HTTPException) as error:

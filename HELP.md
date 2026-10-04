@@ -6,7 +6,7 @@ Search a topic such as **ovarian aging** or **PCOS**, a human gene such as **BRC
 
 ## Sources and coverage
 
-The **Sources** row always shows PubMed, Ensembl, and GWAS Catalog while browsing results. Use its checkboxes, per-source limit, and **Reset** control. Changing sources requires a new search; the existing coverage report describes the completed search.
+The **Sources** row sits above search and stays visible while browsing results. Use its checkboxes, per-source limit, and **Reset** control. Changing sources requires a new search; the existing coverage report describes the completed search.
 
 - **PubMed:** publications and available abstracts.
 - **Ensembl:** human genes, transcripts, and regions, using GRCh38.
@@ -26,7 +26,11 @@ Saved research stays in this browser on this device. Export JSON for backup and 
 
 ## AI assistance
 
-AI is optional and runs through the Python backend. The connection panel shows verified access, missing credentials, and errors. Click **Enter API key**, then **Save key & connect**. The password field clears after submission; the local backend saves the key in ignored `.env` and checks model access without sending research evidence. No restart is needed.
+AI is optional and runs through the Python backend. The compact header shows verified access, missing credentials, and errors. Click **Connect AI**, then **Save key & connect**. The password field clears after submission; the local backend saves the key in ignored `.env` and checks model access without sending research evidence. No restart is needed. **AI settings** opens connection settings on the right; tap the short mobile status for full model details.
+
+After each completed live search, **Make the next step useful** and **Tip** use AI to offer one short next step and one contextual tip. The request contains up to 20 retrieved records, source coverage, research constraints, and up to three saved questions. Guidance is cached for the session until that context changes; it is not generated on every keystroke. **Refresh suggestions** requests another response; turn automatic guidance off in **AI settings** to use manual refresh only.
+
+Open **Why this suggestion?** to review supporting source records and the model/date. **Use refined query** searches the proposed terms. **Save proposed question** opens a brief for review. **Add next step to a brief** lets you choose a saved brief and review the added note before saving. Saved AI material retains its evidence and provenance. Failed, canceled, empty, example, and browser-only states show labeled fallback guidance; browsing and saved work remain available.
 
 Alternatively, configure `.env` using `.env.example` and restart the backend:
 
@@ -59,7 +63,7 @@ The HTML works without the AI backend for sources that allow browser requests. S
 - **One source failed:** review the available results and retry later. Limits and timeouts are reported separately from empty results.
 - **Backend unavailable:** check the backend URL and startup command in the README. Browse compatible sources or use the explicit demonstration.
 - **Windows socket error / busy port:** the standalone launcher tries port 8765 and alternatives, printing the actual URL. Use --port 0 to request an available port. A new port has separate browser storage; import your JSON backup to restore research there. Local HTTP ports can connect to the AI backend.
-- **AI unavailable:** use the visible connection panel to enter or update a key. If the local backend is unavailable, start it before key entry. Check model access and billing; manual `.env` edits require restart.
+- **AI unavailable:** use the header status to enter or update a key. If the local backend is unavailable, start it before key entry. Check model access and billing; manual `.env` edits require restart.
 - **Saved work missing:** check the browser and device, then restore your JSON backup.
 
 ## Licences and project documentation

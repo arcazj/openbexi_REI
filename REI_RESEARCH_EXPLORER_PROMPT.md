@@ -60,7 +60,17 @@ Provide a small Python backend, preferably FastAPI, for AI assistance and API pr
 - Provide prominent AI status and key-entry controls, plus connection help. Automatically verify configured key/model access without sending research evidence or generating text. Distinguish this check from generation permissions and quota. Explain missing credentials, insufficient API access, rate limits, and connectivity errors in plain language.
 - Support **Explain this finding**, evidence summaries, and comparison of saved candidate questions. Suggest questions with a rationale, supporting references, uncertainties, and the data and methods needed to investigate them.
 - Ground responses in retrieved evidence and cite actual source records. Treat novelty and research-gap claims as provisional until verified. Clearly identify when only abstracts or limited metadata were available.
-- Make AI requests user-initiated, with progress feedback, cancellation, and bounded request sizes. Preserve ordinary browsing and saved work when AI is unavailable.
+- Generate compact contextual guidance after user-initiated completed live searches when AI is verified, with progress feedback, cancellation, and bounded request sizes. Allow automatic guidance to be turned off in AI settings. Longer Explain, Suggest research directions, and Compare analyses remain explicitly initiated. Preserve ordinary browsing and saved work when AI is unavailable.
+
+## V1.0 compact redesign and intelligent guidance
+
+- Remove the full-width AI connection banner and its repeated heading/subtitle. Keep one compact header status labeled **AI connected to GPT-6.1 Sol · key verified.** only after actual key/model-access verification. Place **AI settings** on the right. When disconnected, show an actionable Connect AI status. On mobile, shorten the label and reveal full model details on tap.
+- Move selectable sources above search and retain their sticky visibility. Use soft silver, sage, blue, and lavender with readable contrast; reduce padding, repeated labels, and oversized panels. Keep longer explanations in searchable Help.
+- Show one primary research action per stage: Search initially and Suggest research directions after results. Put draft and export actions in More actions. Keep controls usable with keyboard, touch, and narrow screens.
+- Under **Make the next step useful** and **Tip**, use the configured GPT-6.1 Sol model for one next step and one tip, each at most two short sentences. Ground them in the current query, selected-source coverage, retrieved evidence, research constraints, and stage inferred from up to three saved questions.
+- Make guidance actionable: apply a refined query, review/save a proposed research question, and add a next-step note to a saved or new brief. Provide **Why this suggestion?** with supporting source links and model/date. Preserve the evidence and generation audit with saved suggestions.
+- Generate guidance after a completed live search, reuse it until the research context changes, and provide Refresh suggestions. Do not send a request for every keystroke. Discard stale/canceled responses. Reserve compact guidance space during loading, report failures with labeled fallback guidance, and preserve search results and saved work. Never treat illustrative examples as AI evidence.
+- Release **V1.0**, using frontend/backend version `1.0.0` and Git tag `v1.0.0`. Update the concise README, Help, changelog, and GitHub Pages demo. Publish reviewed release notes and downloadable browser/local packages that exclude credentials and private workspace files.
 
 ## Standalone frontend and saved research
 

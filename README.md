@@ -1,16 +1,18 @@
-﻿# REI Research Explorer
+# REI Research Explorer · V1.0
 
-A compact research workspace for an REI fellow developing a fellowship project: explore publications and genomic evidence, draft research questions, and export briefs for mentor review.
+A compact workspace for an REI fellow developing a research project: explore evidence, shape questions, and prepare briefs for mentor review.
 
 **[Open the live demo →](https://arcazj.github.io/openbexi_REI/)**
 
-No installation or key needed. Try a live PubMed/Ensembl search or **Try example workspace**, then save and export a brief. Browser access depends on source availability. AI and GWAS Catalog require the local Python version below.
+[Download V1.0](https://github.com/arcazj/openbexi_REI/releases/tag/v1.0.0) · [Release notes](CHANGELOG.md)
+
+The demo needs no installation or key. Search PubMed/Ensembl, try the labeled example workspace, and save/export manual briefs. AI and GWAS Catalog require the local Python version.
 
 ## Run locally
 
-Requirements: Python 3.9 or newer, a modern browser, and internet access for live sources. The HTML frontend has no build step.
+Requirements: Python 3.9+, a modern browser, and internet for live sources. The HTML has no build step.
 
-From the project folder, run these PowerShell commands:
+From the project folder in PowerShell:
 
 ```powershell
 py -3 -m venv .venv
@@ -18,46 +20,36 @@ py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m uvicorn backend.app:app --host 127.0.0.1 --port 8000
 ```
 
-Open **http://127.0.0.1:8000**. On macOS/Linux, create the environment with `python3 -m venv .venv` and use `.venv/bin/python` for installation and startup.
+Open **http://127.0.0.1:8000**. On macOS/Linux, use `python3 -m venv .venv` and `.venv/bin/python` for installation/startup.
 
-For browser-only operation without installing dependencies:
-
-```powershell
-py -3 serve_frontend.py
-```
-
-This serves the standalone HTML, documentation, and notices on **http://127.0.0.1:8765**. If that port is occupied or blocked, it prints an alternative; use --port 0 to let the OS choose. AI also works from this standalone page when the Python backend is running on port 8000: it connects automatically. For another backend address, use **Help → AI & connection**. Open the printed HTTP URL; double-clicking `index.html` does not enable local AI.
+Browser-only alternative: `py -3 serve_frontend.py`. Open the printed HTTP URL, normally **http://127.0.0.1:8765**. The launcher selects another port if needed; `--port 0` requests an available port. This standalone page automatically connects to a running backend on port 8000. Set another address in **Help → AI & connection**. Double-clicking `index.html` does not enable local AI.
 
 ## Research workflow
 
-1. Search **ovarian aging**, **PCOS**, **BRCA1**, or a GRCh38 region.
-2. Review sources, evidence context, search coverage, and missing information.
-3. Draft a question with population, exposure/intervention, outcome, study design, required data, and feasibility uncertainties.
-4. Save references and notes. Export JSON for backup or Markdown for mentor review.
+1. Select sources above search. Try **ovarian aging**, **PCOS**, **BRCA1**, or a GRCh38 region.
+2. Inspect findings, original sources, and search coverage.
+3. Use **Suggest research directions**, or **More actions → Draft a research question**.
+4. Review feasibility with your mentor. Save a brief; export JSON for backup or Markdown for review.
 
-Saved research stays in this browser. Exports preserve queries, source identifiers, dates, and available AI provenance. Demonstration content is illustrative and excluded from AI evidence. Three.js views are deferred until suitable spatial data and a useful research task are available.
+Saved work stays in this browser. Exports preserve search and AI provenance. Illustrative examples are excluded from scientific evidence and AI input. Three.js views remain deferred until a useful spatial task and suitable data are available.
 
-## Optional AI
+## Connect AI
 
-Click **Enter API key** in the AI connection panel, then **Save key & connect**. The local backend saves the key in its private `.env` and checks model access. No restart is needed. A verified connection turns green; failures show an actionable message.
+Click **Connect AI**, then **Save key & connect**. The backend saves the key in ignored `.env` and verifies model access without restarting. The compact status shows the verified model; **AI settings** is on the right.
 
-Alternatively, create `.env` from `.env.example`, set these values, and restart the backend:
+Alternatively, copy `.env.example` to `.env`, configure the following, and restart:
 
 ```dotenv
 OPENAI_API_KEY=your_api_key_here
 OPENAI_MODEL=gpt-6.1-sol
 ```
 
-OpenAI API access is metered; your account must support the model and have generation quota. The password field clears after submission. Keep keys out of HTML source, browser storage, exports, and Git; `.env.example` is public. Browsing and manual briefs work without AI.
+After a completed live search, AI supplies one next step and one tip from retrieved evidence, constraints, and up to three saved questions. **Why this suggestion?** shows supporting sources. Apply a refined query, review/save a proposed question, or add a next step to a brief. Guidance is reused for the same context; **Refresh suggestions** requests new text. Turn automatic guidance off in **AI settings** for manual refresh.
 
-## Help and licences
+API usage is metered and needs model access and generation quota. Keys stay on the backend; keep them out of HTML, browser storage, exports, and Git. `.env.example` is public. AI failures show labeled fallback guidance and preserve saved work.
 
-In-app **Help** provides searchable tips and all documentation. See [Help](HELP.md), [the final implementation prompt](REI_RESEARCH_EXPLORER_PROMPT.md), [commercial-use terms](COMMERCIAL_LICENSING.md), and [third-party notices](THIRD_PARTY_NOTICES.md). The project's original-code license remains pending owner selection.
+## Help, licences, and checks
 
-## Checks and troubleshooting
+Searchable **Help** includes all documentation. See [Help](HELP.md), [implementation prompt](REI_RESEARCH_EXPLORER_PROMPT.md), [commercial terms](COMMERCIAL_LICENSING.md), and [third-party notices](THIRD_PARTY_NOTICES.md). Original-code licensing remains pending owner selection.
 
-Run `python -m unittest discover -s tests -v` using the virtual environment's Python. CI checks the backend on Python 3.9 and 3.12.
-
-Automated tests and browser checks cover live searches, saved briefs, exports, standalone backend connections, and mobile layouts. Live AI generation requires your key.
-
-Sources stay visible while scrolling. Draft, AI suggestions, and audit export appear above completed results. For failures, inspect source coverage or the AI connection panel. Restart after manual `.env` edits. Back up research before clearing browser storage.
+Run `python -m unittest discover -s tests -v` with the virtual environment. Optional browser checks: `npm ci`, `npx playwright install chromium`, then `npm run test:ui`. These development tools are not needed to run the HTML. CI checks Python 3.9/3.12 and desktop/mobile behavior. For failures, inspect coverage or AI settings. Back up research before clearing browser storage.

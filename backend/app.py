@@ -22,13 +22,13 @@ from .sources import SOURCE_INFO, SourceService, interpret, utc_now
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env", override=False)
-VERSION = "0.1.0"
+VERSION = "1.0.0"
 # The standalone launcher can select any free local port. Keep browser access
 # limited to exact loopback HTTP origins, using one policy for CORS and POSTs.
 LOCAL_PORT_PATTERN = r"(?:[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])"
 LOCAL_ORIGIN_PATTERN = rf"http://(?:localhost|127\.0\.0\.1)(?::{LOCAL_PORT_PATTERN})?"
 LOCAL_ORIGIN = re.compile(LOCAL_ORIGIN_PATTERN)
-DOC_FILES = {"README.md", "HELP.md", "COMMERCIAL_LICENSING.md", "THIRD_PARTY_NOTICES.md", "REI_RESEARCH_EXPLORER_PROMPT.md", "LICENSE"}
+DOC_FILES = {"README.md", "CHANGELOG.md", "HELP.md", "COMMERCIAL_LICENSING.md", "THIRD_PARTY_NOTICES.md", "REI_RESEARCH_EXPLORER_PROMPT.md", "LICENSE"}
 
 
 class SearchRequest(BaseModel):
@@ -73,7 +73,7 @@ class AIConfigureRequest(BaseModel):
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     async with httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=8.0, pool=8.0), follow_redirects=False,
-                                 headers={"User-Agent": "REIResearchExplorer/0.1 (local fellowship research prototype)"},
+                                 headers={"User-Agent": "REIResearchExplorer/1.0 (local fellowship research workspace)"},
                                  limits=httpx.Limits(max_connections=12, max_keepalive_connections=6)) as client:
         application.state.sources = SourceService(client, os.getenv("NCBI_EMAIL", ""))
         application.state.search_slots = asyncio.Semaphore(6)
