@@ -56,6 +56,10 @@ def make_icon(path):
 
 
 def verify_bundle(bundle):
+    if bundle.is_symlink():
+        raise ValueError("Linked bundle roots are not allowed.")
+    # Windows TEMP may use a DOS short path while resolve() returns the long path.
+    bundle = bundle.resolve()
     private_paths = []
     for path in bundle.rglob("*"):
         if path.is_symlink() or not path.resolve().is_relative_to(bundle):
