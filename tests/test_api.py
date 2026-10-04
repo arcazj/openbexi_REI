@@ -1,19 +1,24 @@
 """Validate API boundaries without depending on public services or an API key."""
 
 import os
+import importlib
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
 from backend.app import app
 
+application_module = importlib.import_module("backend.app")
+
 
 class APIBoundaryTests(unittest.TestCase):
     def setUp(self):
         self.environment = patch.dict(os.environ, {"OPENAI_API_KEY": ""})
         self.environment.start()
-        self.client = TestClient(app)
+        self.client = TestClient(app, client=("127.0.0.1", 50000))
         self.client.__enter__()
 
     def tearDown(self):
@@ -137,6 +142,76 @@ class APIBoundaryTests(unittest.TestCase):
         response = self.client.post("/api/search", json={"query": "topic", "sources": [secret]})
         self.assertEqual(response.status_code, 422)
         self.assertNotIn(secret, response.text)
+
+    def test_local_key_configuration_is_persistent_private_and_immediate(self):
+        fake_key = "sk-project-fixture-must-not-leak"
+        with tempfile.TemporaryDirectory() as directory:
+            env_file = Path(directory) / ".env"
+            env_file.write_text("OPENAI_API_KEY=old-fixture-key\nOPENAI_MODEL=gpt-6.1-sol\nNCBI_EMAIL=research@example.com\n", encoding="utf-8")
+            with patch.object(application_module, "ROOT", Path(directory)), patch.dict(os.environ, {"OPENAI_MODEL": "gpt-6.1-sol"}), patch("backend.app.ai.check_connection", new=AsyncMock()) as check:
+                response = self.client.post("/api/ai/configure", json={"api_key": fake_key}, headers={"Origin": "http://127.0.0.1:8765"})
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertTrue(response.json()["configured"])
+                self.assertEqual(response.json()["model"], "gpt-6.1-sol")
+                self.assertFalse(response.json()["accessible"])
+                self.assertNotIn(fake_key, response.text)
+                self.assertEqual(response.headers["cache-control"], "no-store")
+                self.assertEqual(response.headers["access-control-allow-origin"], "http://127.0.0.1:8765")
+                self.assertEqual(os.environ["OPENAI_API_KEY"], fake_key)
+                saved = env_file.read_text(encoding="utf-8")
+                self.assertIn("OPENAI_API_KEY='" + fake_key + "'", saved)
+                self.assertNotIn("old-fixture-key", saved)
+                self.assertIn("OPENAI_MODEL=gpt-6.1-sol", saved)
+                self.assertIn("NCBI_EMAIL=research@example.com", saved)
+                health = self.client.get("/api/health")
+                self.assertTrue(health.json()["ai"]["configured"])
+                self.assertNotIn(fake_key, health.text)
+                check.assert_not_awaited()
+
+    def test_invalid_key_configuration_never_changes_disk_or_environment(self):
+        invalid_values = ["", "sk-short", "not-an-openai-key-that-is-long-enough", "sk-" + "x" * 510, "sk-fixture-key\nwith-control-characters"]
+        with tempfile.TemporaryDirectory() as directory:
+            env_file = Path(directory) / ".env"
+            env_file.write_text("NCBI_EMAIL=research@example.com\n", encoding="utf-8")
+            with patch.object(application_module, "ROOT", Path(directory)):
+                for value in invalid_values:
+                    with self.subTest(value_length=len(value)):
+                        response = self.client.post("/api/ai/configure", json={"api_key": value})
+                        self.assertEqual(response.status_code, 422, response.text)
+                        if value:
+                            self.assertNotIn(value, response.text)
+                        self.assertEqual(os.environ["OPENAI_API_KEY"], "")
+                        self.assertEqual(env_file.read_text(encoding="utf-8"), "NCBI_EMAIL=research@example.com\n")
+
+    def test_remote_peer_cannot_configure_key_even_with_local_origin_or_forwarded_address(self):
+        fake_key = "sk-project-fixture-must-not-leak"
+        with TestClient(app, client=("192.0.2.10", 50000)) as remote_client, patch("backend.app.set_key") as save:
+            response = remote_client.post("/api/ai/configure", json={"api_key": fake_key}, headers={
+                "Origin": "http://localhost:8765", "X-Forwarded-For": "127.0.0.1",
+            })
+        self.assertEqual(response.status_code, 403, response.text)
+        self.assertNotIn(fake_key, response.text)
+        self.assertEqual(os.environ["OPENAI_API_KEY"], "")
+        save.assert_not_called()
+
+    def test_untrusted_origin_cannot_configure_key(self):
+        fake_key = "sk-project-fixture-must-not-leak"
+        with patch("backend.app.set_key") as save:
+            for origin in ["null", "https://example.com", "http://localhost.evil.example:8765"]:
+                response = self.client.post("/api/ai/configure", json={"api_key": fake_key}, headers={"Origin": origin})
+                self.assertEqual(response.status_code, 403, response.text)
+                self.assertNotIn(fake_key, response.text)
+        save.assert_not_called()
+
+    def test_key_configuration_write_failure_is_sanitized_and_keeps_current_key(self):
+        fake_key = "sk-project-fixture-must-not-leak"
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "existing-private-fixture"}), patch("backend.app.set_key", side_effect=PermissionError(fake_key)):
+            response = self.client.post("/api/ai/configure", json={"api_key": fake_key})
+            self.assertEqual(response.status_code, 500, response.text)
+            self.assertIn("writable", response.json()["detail"])
+            self.assertNotIn(fake_key, response.text)
+            self.assertNotIn("existing-private-fixture", response.text)
+            self.assertEqual(os.environ["OPENAI_API_KEY"], "existing-private-fixture")
 
 
 if __name__ == "__main__":

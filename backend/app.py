@@ -1,6 +1,7 @@
 """Run: python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000."""
 
 import asyncio
+import ipaddress
 import os
 import re
 from contextlib import asynccontextmanager
@@ -8,11 +9,11 @@ from pathlib import Path
 from typing import List, Literal
 
 import httpx
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -49,6 +50,23 @@ class SearchRequest(BaseModel):
     def unique_sources(cls, value: List[str]) -> List[str]:
         if len(set(value)) != len(value):
             raise ValueError("Select each source only once.")
+        return value
+
+
+class AIConfigureRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    api_key: SecretStr = Field(min_length=20, max_length=512)
+
+    @field_validator("api_key", mode="before")
+    @classmethod
+    def trim_key(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("api_key")
+    @classmethod
+    def valid_key(cls, value: SecretStr) -> SecretStr:
+        if re.fullmatch(r"sk-[A-Za-z0-9_-]+", value.get_secret_value()) is None:
+            raise ValueError("Enter a complete OpenAI secret key beginning with sk-.")
         return value
 
 
@@ -126,6 +144,28 @@ async def ai_request(request: ai.AIRequest):
 @app.get("/api/ai/check")
 async def ai_check():
     return await ai.check_connection()
+
+
+@app.post("/api/ai/configure")
+async def ai_configure(configuration: AIConfigureRequest, request: Request):
+    # A local-looking Origin or Host is not proof that the network peer is local.
+    # Never trust X-Forwarded-For here: this endpoint changes server credentials.
+    try:
+        local_client = request.client is not None and ipaddress.ip_address(request.client.host).is_loopback
+    except ValueError:
+        local_client = False
+    if not local_client:
+        raise HTTPException(403, "API keys can only be configured from this computer.")
+    key = configuration.api_key.get_secret_value()
+    try:
+        set_key(str(ROOT / ".env"), "OPENAI_API_KEY", key, quote_mode="always")
+    except Exception:
+        raise HTTPException(500, "Could not save the API key. Check that the project directory and .env are writable, then try again.") from None
+    # Refresh this process only after the file has been written successfully.
+    # The key never appears in a response or goes into browser storage.
+    os.environ["OPENAI_API_KEY"] = key
+    return {"configured": True, "model": ai.model_name(), "accessible": False,
+            "message": "API key saved on this computer. Check AI access to verify the connection."}
 
 
 @app.get("/")

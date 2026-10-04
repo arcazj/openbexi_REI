@@ -6,7 +6,7 @@ Search a topic such as **ovarian aging** or **PCOS**, a human gene such as **BRC
 
 ## Sources and coverage
 
-**Recommended sources** selects relevant providers. Use **Sources & filters** to select providers yourself or limit the number of retrieved records.
+The **Sources** row always shows PubMed, Ensembl, and GWAS Catalog while browsing results. Use its checkboxes, per-source limit, and **Reset** control. Changing sources requires a new search; the existing coverage report describes the completed search.
 
 - **PubMed:** publications and available abstracts.
 - **Ensembl:** human genes, transcripts, and regions, using GRCh38.
@@ -26,16 +26,18 @@ Saved research stays in this browser on this device. Export JSON for backup and 
 
 ## AI assistance
 
-AI is optional and runs through the Python backend. Configure a local `.env` using `.env.example`, then restart the backend:
+AI is optional and runs through the Python backend. The connection panel shows verified access, missing credentials, and errors. Click **Enter API key**, then **Save key & connect**. The password field clears after submission; the local backend saves the key in ignored `.env` and checks model access without sending research evidence. No restart is needed.
+
+Alternatively, configure `.env` using `.env.example` and restart the backend:
 
 ```dotenv
 OPENAI_API_KEY=your_api_key_here
 OPENAI_MODEL=gpt-6.1-sol
 ```
 
-Keys remain on the server. Never put a real key in the HTML, browser storage, exported research, or Git. OpenAI API usage is metered and requires access to the configured model.
+Keys are stored only on the server. Never embed a key in HTML source, browser storage, exported research, or Git. UI key entry is available only through a local HTTP backend. OpenAI API usage is metered and requires model access and sufficient quota; the connection check verifies key and model access without generating text.
 
-AI also works from the standalone HTML served by `py -3 serve_frontend.py`. Keep the backend running on port 8000; the page connects automatically. Use **Help → AI & connection → Check connection**, then **Check AI access**. A custom backend URL overrides automatic detection. Put your key only in `.env`; `.env.example` is a public template.
+AI also works from the standalone HTML served by `py -3 serve_frontend.py`. Keep the backend running on port 8000; the page connects and checks access automatically. A custom backend URL in **Help → AI & connection** overrides automatic detection. `.env.example` is a public template.
 
 Use **Explain**, question generation, or comparison when evidence is available. Suggestions should cite supplied records and identify uncertainty. A suggested gap or novel question is provisional. Exports preserve the evidence identifiers, model, and prompt version for review. Canceling a browser request may not stop a provider request that has already started.
 
@@ -55,7 +57,7 @@ The HTML works without the AI backend for sources that allow browser requests. S
 - **One source failed:** review the available results and retry later. Limits and timeouts are reported separately from empty results.
 - **Backend unavailable:** check the backend URL and startup command in the README. Browse compatible sources or use the explicit demonstration.
 - **Windows socket error / busy port:** the standalone launcher tries port 8765 and alternatives, printing the actual URL. Use --port 0 to request an available port. A new port has separate browser storage; import your JSON backup to restore research there. Local HTTP ports can connect to the AI backend.
-- **AI unavailable:** check `.env`, restart the backend, and review connection/model access status. The key is never entered in the browser.
+- **AI unavailable:** use the visible connection panel to enter or update a key. If the local backend is unavailable, start it before key entry. Check model access and billing; manual `.env` edits require restart.
 - **Saved work missing:** check the browser and device, then restore your JSON backup.
 
 ## Licences and project documentation

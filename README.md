@@ -35,14 +35,16 @@ Saved research stays in this browser. Exports preserve queries, source identifie
 
 ## Optional AI
 
-Create a local `.env` from `.env.example`, set these server-side values, and restart the backend:
+Click **Enter API key** in the AI connection panel, then **Save key & connect**. The local backend saves the key in its private `.env` and checks model access. No restart is needed. A verified connection turns green; failures show an actionable message.
+
+Alternatively, create `.env` from `.env.example`, set these values, and restart the backend:
 
 ```dotenv
 OPENAI_API_KEY=your_api_key_here
 OPENAI_MODEL=gpt-6.1-sol
 ```
 
-Use **Help → AI & connection → Check AI access**. OpenAI API access is metered; your account must support the configured model. Keep the key in `.env`; `.env.example` is a public template. Never put a key in HTML, browser storage, exports, or Git. Basic browsing and manual briefs work without AI.
+OpenAI API access is metered; your account must support the model and have generation quota. The password field clears after submission. Keep keys out of HTML source, browser storage, exports, and Git; `.env.example` is public. Browsing and manual briefs work without AI.
 
 ## Help and licences
 
@@ -54,4 +56,4 @@ Run `python -m unittest discover -s tests -v` using the virtual environment's Py
 
 Automated tests and browser checks cover live searches, saved briefs, exports, standalone backend connections, and mobile layouts. Live AI generation requires your key.
 
-If a source fails, inspect its coverage status and retry; an empty result is different from failed retrieval. If AI fails, check `.env`, model access, and connection status. Restart the backend after configuration changes. Back up saved work before clearing browser storage.
+Sources stay visible while scrolling. Draft, AI suggestions, and audit export appear above completed results. For failures, inspect source coverage or the AI connection panel. Restart after manual `.env` edits. Back up research before clearing browser storage.
