@@ -2,6 +2,10 @@
 
 A compact research workspace for an REI fellow developing a fellowship project: explore publications and genomic evidence, draft research questions, and export briefs for mentor review.
 
+**[Open the live demo →](https://arcazj.github.io/openbexi_REI/)**
+
+No installation or key needed. Try a live PubMed/Ensembl search or **Try example workspace**, then save and export a brief. Browser access depends on source availability. AI and GWAS Catalog require the local Python version below.
+
 ## Run locally
 
 Requirements: Python 3.9 or newer, a modern browser, and internet access for live sources. The HTML frontend has no build step.

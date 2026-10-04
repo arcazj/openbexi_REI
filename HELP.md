@@ -43,6 +43,8 @@ Use **Explain**, question generation, or comparison when evidence is available. 
 
 ## Demonstration and browser-only use
 
+The [GitHub Pages live demo](https://arcazj.github.io/openbexi_REI/) runs the standalone frontend, with live PubMed/Ensembl requests where browser access is available, manual research briefs, and exports. It hosts no Python backend. **Run with AI** opens local setup instructions; no key is entered on the public demo.
+
 Demonstration mode is explicitly labeled and uses illustrative material. It is for learning the workflow, not research evidence or AI input. A live search failure never silently switches to demonstration mode.
 
 The HTML works without the AI backend for sources that allow browser requests. Starting the Python backend enables AI and proxied sources from the same standalone page. Serve the HTML over local HTTP; a double-clicked `file://` page cannot access the local AI backend. Documentation files can be opened from Help or directly beside `index.html`.

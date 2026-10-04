@@ -68,6 +68,8 @@ Deliver one HTML frontend containing its CSS and JavaScript, with no build step,
 
 Keep Python optional for basic browsing; AI uses the Python backend. The standalone HTML, served over local HTTP, should automatically connect to the local backend on port 8000 and use its server-side key. Allow a custom backend URL in Help, preserving it without automatic fallback. Support the standalone launcher's alternate HTTP loopback ports; exclude remote and file/null origins from local backend access. Browser-only mode must support sources verified to allow direct browser access; clearly indicate sources that need a backend proxy. Provide clearly labeled example data for trying the interface when live services are unavailable.
 
+Publish a GitHub Pages browser demo linked prominently from the README. Deploy an explicit allowlist of HTML, help documents, and licence notices. Hosted mode must avoid backend/localhost probes and key entry, explain that AI/GWAS require the local version, and load documentation correctly under the repository URL prefix. Publish updates automatically from `master`.
+
 Persist saved questions, references, and notes locally across reloads. Support editing, deletion, and export/import of the research workspace in JSON, plus a concise Markdown export for review with a fellowship mentor.
 
 Preserve an audit trail with original queries, filters, exact source queries, identifiers, retrieval dates, source versions when available, and the evidence supplied to AI. Record model and prompt versions alongside generated advice and exported briefs. Keep stored content within applicable reuse permissions.

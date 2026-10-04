@@ -13,6 +13,7 @@ htmlcov/
 node_modules/
 test-results/
 playwright-report/
+_site/
 *.log
 Thumbs.db
 .DS_Store
