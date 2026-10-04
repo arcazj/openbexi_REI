@@ -91,7 +91,7 @@ def main():
         print("Port " + str(args.port) + " is occupied or blocked; using " + str(actual_port) + ".", flush=True)
         print("A different port has separate browser storage. Restore saved research from your JSON backup if needed.", flush=True)
     print("Frontend: http://127.0.0.1:" + str(actual_port), flush=True)
-    print("Browser-only mode. For AI and all sources, use the UI served by the Python backend.", flush=True)
+    print("Standalone HTML. For AI and all sources, keep the Python backend running on port 8000; the page connects automatically.", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

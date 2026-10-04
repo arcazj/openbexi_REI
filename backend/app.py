@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List, Literal
@@ -21,7 +22,11 @@ from .sources import SOURCE_INFO, SourceService, interpret, utc_now
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env", override=False)
 VERSION = "0.1.0"
-ALLOWED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000", "http://127.0.0.1:8080", "http://localhost:8080"]
+# The standalone launcher can select any free local port. Keep browser access
+# limited to exact loopback HTTP origins, using one policy for CORS and POSTs.
+LOCAL_PORT_PATTERN = r"(?:[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])"
+LOCAL_ORIGIN_PATTERN = rf"http://(?:localhost|127\.0\.0\.1)(?::{LOCAL_PORT_PATTERN})?"
+LOCAL_ORIGIN = re.compile(LOCAL_ORIGIN_PATTERN)
 DOC_FILES = {"README.md", "HELP.md", "COMMERCIAL_LICENSING.md", "THIRD_PARTY_NOTICES.md", "REI_RESEARCH_EXPLORER_PROMPT.md", "LICENSE"}
 
 
@@ -60,7 +65,7 @@ async def lifespan(application: FastAPI):
 
 app = FastAPI(title="REI Research Explorer", version=VERSION, lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "testserver"])
-app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_methods=["GET", "POST"],
+app.add_middleware(CORSMiddleware, allow_origin_regex=LOCAL_ORIGIN_PATTERN, allow_methods=["GET", "POST"],
                    allow_headers=["Content-Type"], allow_credentials=False)
 
 
@@ -68,8 +73,8 @@ app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_methods=
 async def request_limits(request: Request, call_next):
     if request.method == "POST":
         origin = request.headers.get("origin")
-        if origin and origin not in ALLOWED_ORIGINS:
-            return JSONResponse({"detail": "Open the local application to make API requests."}, status_code=403)
+        if origin is not None and LOCAL_ORIGIN.fullmatch(origin) is None:
+            return JSONResponse({"detail": "Serve index.html over local HTTP with serve_frontend.py, then connect to the Python backend in Help. File URLs and nonlocal web origins cannot use this API."}, status_code=403)
         if "application/json" not in request.headers.get("content-type", "").lower():
             return JSONResponse({"detail": "API requests must use application/json."}, status_code=415)
         try:

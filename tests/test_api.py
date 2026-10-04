@@ -24,6 +24,60 @@ class APIBoundaryTests(unittest.TestCase):
         response = self.client.get("/api/health")
         self.assertEqual(response.status_code, 200)
 
+    def test_standalone_local_origins_support_health_preflight_and_ai_check(self):
+        origins = [
+            "http://127.0.0.1:8765", "http://localhost:8775", "http://127.0.0.1:63514",
+            "http://localhost:1", "http://127.0.0.1:65535", "http://localhost", "http://127.0.0.1",
+            "http://127.0.0.1:8000", "http://localhost:8080",
+        ]
+        for origin in origins:
+            with self.subTest(origin=origin):
+                response = self.client.get("/api/health", headers={"Origin": origin})
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertEqual(response.headers.get("access-control-allow-origin"), origin)
+                response = self.client.options("/api/ai/check", headers={
+                    "Origin": origin, "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "content-type",
+                })
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertEqual(response.headers.get("access-control-allow-origin"), origin)
+                with patch("backend.app.ai.check_connection", new=AsyncMock(return_value={"ok": True})) as check:
+                    response = self.client.post("/api/ai/check", json={}, headers={"Origin": origin})
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertEqual(response.headers.get("access-control-allow-origin"), origin)
+                check.assert_awaited_once()
+
+    def test_untrusted_and_file_origins_cannot_access_ai(self):
+        origins = [
+            "null", "https://localhost:8765", "https://127.0.0.1:8765", "https://example.com",
+            "http://example.com", "http://192.168.1.2:8765", "http://localhost.evil.example:8765",
+            "http://127.0.0.1.evil.example:8765", "http://localhost@evil.example:8765",
+            "http://user@localhost:8765", "http://localhost:0", "http://localhost:65536",
+            "http://127.0.0.1:100000", "http://localhost:8765/", "http://localhost:8765?query",
+            "http://localhost:8765#fragment", "http://localhost:", "http://localhost:08765", "",
+        ]
+        for origin in origins:
+            with self.subTest(origin=origin):
+                response = self.client.get("/api/health", headers={"Origin": origin})
+                self.assertNotIn("access-control-allow-origin", response.headers)
+                response = self.client.options("/api/ai/check", headers={
+                    "Origin": origin, "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "content-type",
+                })
+                self.assertEqual(response.status_code, 400, response.text)
+                self.assertNotIn("access-control-allow-origin", response.headers)
+                with patch("backend.app.ai.check_connection", new=AsyncMock()) as check:
+                    response = self.client.post("/api/ai/check", json={}, headers={"Origin": origin})
+                self.assertEqual(response.status_code, 403, response.text)
+                self.assertIn("serve_frontend.py", response.json()["detail"])
+                check.assert_not_awaited()
+
+    def test_ai_check_without_origin_remains_available_to_local_clients(self):
+        with patch("backend.app.ai.check_connection", new=AsyncMock(return_value={"ok": True})) as check:
+            response = self.client.post("/api/ai/check", json={})
+        self.assertEqual(response.status_code, 200, response.text)
+        check.assert_awaited_once()
+
     def test_invalid_search_never_reaches_a_public_source(self):
         invalid_requests = [
             {"query": "", "mode": "topic", "sources": ["pubmed"]},

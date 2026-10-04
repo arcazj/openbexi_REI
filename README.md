@@ -22,7 +22,7 @@ For browser-only operation without installing dependencies:
 py -3 serve_frontend.py
 ```
 
-This serves the frontend, documentation, and notices on **http://127.0.0.1:8765**. If that port is occupied or blocked, it prints an available alternative. Use --port 0 to let the OS choose. For AI and all sources, open the backend's URL instead.
+This serves the standalone HTML, documentation, and notices on **http://127.0.0.1:8765**. If that port is occupied or blocked, it prints an alternative; use --port 0 to let the OS choose. AI also works from this standalone page when the Python backend is running on port 8000: it connects automatically. For another backend address, use **Help → AI & connection**. Open the printed HTTP URL; double-clicking `index.html` does not enable local AI.
 
 ## Research workflow
 
@@ -42,7 +42,7 @@ OPENAI_API_KEY=your_api_key_here
 OPENAI_MODEL=gpt-6.1-sol
 ```
 
-Use Help/settings to check the connection. OpenAI API access is metered; your account must support the configured model. Never put a key in HTML, browser storage, exports, or Git. Basic browsing and manual briefs work without AI.
+Use **Help → AI & connection → Check AI access**. OpenAI API access is metered; your account must support the configured model. Keep the key in `.env`; `.env.example` is a public template. Never put a key in HTML, browser storage, exports, or Git. Basic browsing and manual briefs work without AI.
 
 ## Help and licences
 
@@ -52,6 +52,6 @@ In-app **Help** provides searchable tips and all documentation. See [Help](HELP.
 
 Run `python -m unittest discover -s tests -v` using the virtual environment's Python. CI checks the backend on Python 3.9 and 3.12.
 
-Verified with 37 automated tests and browser checks of live searches, saved briefs, exports, and mobile layouts. Live AI generation requires your key.
+Automated tests and browser checks cover live searches, saved briefs, exports, standalone backend connections, and mobile layouts. Live AI generation requires your key.
 
 If a source fails, inspect its coverage status and retry; an empty result is different from failed retrieval. If AI fails, check `.env`, model access, and connection status. Restart the backend after configuration changes. Back up saved work before clearing browser storage.

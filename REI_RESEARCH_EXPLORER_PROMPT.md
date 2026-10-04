@@ -66,7 +66,7 @@ Provide a small Python backend, preferably FastAPI, for AI assistance and API pr
 
 Deliver one HTML frontend containing its CSS and JavaScript, with no build step, served over local HTTP. Document and pin external library versions. Explain internet requirements and any CDN dependencies.
 
-Keep Python optional for AI. Browser-only mode must support sources verified to allow direct browser access; clearly indicate sources that need a backend proxy. Handle CORS requirements explicitly. Provide clearly labeled example data for trying the interface when live services are unavailable.
+Keep Python optional for basic browsing; AI uses the Python backend. The standalone HTML, served over local HTTP, should automatically connect to the local backend on port 8000 and use its server-side key. Allow a custom backend URL in Help, preserving it without automatic fallback. Support the standalone launcher's alternate HTTP loopback ports; exclude remote and file/null origins from local backend access. Browser-only mode must support sources verified to allow direct browser access; clearly indicate sources that need a backend proxy. Provide clearly labeled example data for trying the interface when live services are unavailable.
 
 Persist saved questions, references, and notes locally across reloads. Support editing, deletion, and export/import of the research workspace in JSON, plus a concise Markdown export for review with a fellowship mentor.
 

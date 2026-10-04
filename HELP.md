@@ -35,13 +35,15 @@ OPENAI_MODEL=gpt-6.1-sol
 
 Keys remain on the server. Never put a real key in the HTML, browser storage, exported research, or Git. OpenAI API usage is metered and requires access to the configured model.
 
+AI also works from the standalone HTML served by `py -3 serve_frontend.py`. Keep the backend running on port 8000; the page connects automatically. Use **Help → AI & connection → Check connection**, then **Check AI access**. A custom backend URL overrides automatic detection. Put your key only in `.env`; `.env.example` is a public template.
+
 Use **Explain**, question generation, or comparison when evidence is available. Suggestions should cite supplied records and identify uncertainty. A suggested gap or novel question is provisional. Exports preserve the evidence identifiers, model, and prompt version for review. Canceling a browser request may not stop a provider request that has already started.
 
 ## Demonstration and browser-only use
 
 Demonstration mode is explicitly labeled and uses illustrative material. It is for learning the workflow, not research evidence or AI input. A live search failure never silently switches to demonstration mode.
 
-The HTML works without the AI backend for sources that allow browser requests. If a source needs a proxy, start the Python backend. Browser-only mode does not enable AI. Documentation files can be opened from Help or directly beside `index.html`.
+The HTML works without the AI backend for sources that allow browser requests. Starting the Python backend enables AI and proxied sources from the same standalone page. Serve the HTML over local HTTP; a double-clicked `file://` page cannot access the local AI backend. Documentation files can be opened from Help or directly beside `index.html`.
 
 ## 3D views
 
@@ -52,7 +54,7 @@ The HTML works without the AI backend for sources that allow browser requests. I
 - **No findings:** inspect the search interpretation, exact source queries, and coverage; try a synonym or broader topic.
 - **One source failed:** review the available results and retry later. Limits and timeouts are reported separately from empty results.
 - **Backend unavailable:** check the backend URL and startup command in the README. Browse compatible sources or use the explicit demonstration.
-- **Windows socket error / busy port:** the browser-only launcher tries port 8765 and alternatives, printing the actual URL. Use --port 0 to request an available port. A new port has separate browser storage; import your JSON backup to restore research there. For AI, open the backend's own URL.
+- **Windows socket error / busy port:** the standalone launcher tries port 8765 and alternatives, printing the actual URL. Use --port 0 to request an available port. A new port has separate browser storage; import your JSON backup to restore research there. Local HTTP ports can connect to the AI backend.
 - **AI unavailable:** check `.env`, restart the backend, and review connection/model access status. The key is never entered in the browser.
 - **Saved work missing:** check the browser and device, then restore your JSON backup.
 
