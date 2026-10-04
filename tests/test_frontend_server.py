@@ -1,12 +1,14 @@
 """Browser-only serving must keep files outside its public allowlist private."""
 
+import errno
 import http.client
+import socket
 import tempfile
 import threading
 import unittest
 from http.server import ThreadingHTTPServer
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, sentinel
 
 import serve_frontend
 
@@ -81,6 +83,80 @@ class BrowserOnlyServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertGreater(int(dict(headers)["Content-Length"]), 0)
         self.assertEqual(body, b"")
+
+
+class FrontendStartupTests(unittest.TestCase):
+    def test_windows_access_denial_uses_an_alternate_local_port(self):
+        denied = OSError(errno.EACCES, "fixture access denial")
+        denied.winerror = 10013
+        with patch.object(serve_frontend, "LocalFrontendServer", side_effect=[denied, sentinel.server]) as constructor:
+            server = serve_frontend.create_server(8000)
+        self.assertIs(server, sentinel.server)
+        addresses = [call.args[0] for call in constructor.call_args_list]
+        self.assertEqual(addresses[0], ("127.0.0.1", 8000))
+        self.assertEqual(addresses[1], ("127.0.0.1", serve_frontend.DEFAULT_PORT))
+
+    def test_busy_default_port_is_not_retried_as_its_own_fallback(self):
+        busy = OSError(errno.EADDRINUSE, "fixture occupied port")
+        busy.winerror = 10048
+        with patch.object(serve_frontend, "LocalFrontendServer", side_effect=[busy, sentinel.server]) as constructor:
+            server = serve_frontend.create_server(serve_frontend.DEFAULT_PORT)
+        self.assertIs(server, sentinel.server)
+        ports = [call.args[0][1] for call in constructor.call_args_list]
+        self.assertEqual(ports, [serve_frontend.DEFAULT_PORT, serve_frontend.DEFAULT_PORT + 1])
+
+    def test_windows_codes_and_posix_permission_errors_trigger_fallback(self):
+        failures = [OSError(errno.EPERM, "fixture denied"), OSError(errno.EACCES, "fixture denied")]
+        for code in (10013, 10048):
+            failure = OSError("fixture Windows bind failure")
+            failure.winerror = code
+            failures.append(failure)
+        for failure in failures:
+            with self.subTest(errno=failure.errno, winerror=getattr(failure, "winerror", None)):
+                with patch.object(serve_frontend, "LocalFrontendServer", side_effect=[failure, sentinel.server]) as constructor:
+                    self.assertIs(serve_frontend.create_server(8000), sentinel.server)
+                self.assertEqual(constructor.call_count, 2)
+
+    def test_unrelated_socket_error_propagates_without_retrying(self):
+        failure = OSError(errno.EIO, "fixture unrelated socket failure")
+        with patch.object(serve_frontend, "LocalFrontendServer", side_effect=failure) as constructor:
+            with self.assertRaises(OSError) as error:
+                serve_frontend.create_server(8000)
+        self.assertIs(error.exception, failure)
+        self.assertEqual(constructor.call_count, 1)
+
+    def test_strict_port_preserves_bind_error_without_fallback(self):
+        busy = OSError(errno.EADDRINUSE, "fixture occupied port")
+        with patch.object(serve_frontend, "LocalFrontendServer", side_effect=busy) as constructor:
+            with self.assertRaises(OSError) as error:
+                serve_frontend.create_server(8000, allow_fallback=False)
+        self.assertIs(error.exception, busy)
+        self.assertEqual(constructor.call_count, 1)
+
+    def test_port_zero_is_passed_to_the_operating_system(self):
+        with patch.object(serve_frontend, "LocalFrontendServer", return_value=sentinel.server) as constructor:
+            server = serve_frontend.create_server(0)
+        self.assertIs(server, sentinel.server)
+        constructor.assert_called_once_with(("127.0.0.1", 0), serve_frontend.FrontendHandler)
+
+    def test_actual_occupied_port_falls_back_without_replacing_existing_listener(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+            if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+                listener.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+            listener.bind(("127.0.0.1", 0))
+            listener.listen(1)
+            listener.settimeout(3)
+            original_address = listener.getsockname()
+            server = serve_frontend.create_server(original_address[1])
+            try:
+                self.assertNotEqual(server.server_port, original_address[1])
+                self.assertEqual(server.server_address[0], "127.0.0.1")
+                self.assertEqual(listener.getsockname(), original_address)
+                with socket.create_connection(original_address, timeout=3):
+                    accepted, _ = listener.accept()
+                    accepted.close()
+            finally:
+                server.server_close()
 
 
 if __name__ == "__main__":

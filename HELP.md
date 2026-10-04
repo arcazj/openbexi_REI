@@ -52,6 +52,7 @@ The HTML works without the AI backend for sources that allow browser requests. I
 - **No findings:** inspect the search interpretation, exact source queries, and coverage; try a synonym or broader topic.
 - **One source failed:** review the available results and retry later. Limits and timeouts are reported separately from empty results.
 - **Backend unavailable:** check the backend URL and startup command in the README. Browse compatible sources or use the explicit demonstration.
+- **Windows socket error / busy port:** the browser-only launcher tries port 8765 and alternatives, printing the actual URL. Use --port 0 to request an available port. A new port has separate browser storage; import your JSON backup to restore research there. For AI, open the backend's own URL.
 - **AI unavailable:** check `.env`, restart the backend, and review connection/model access status. The key is never entered in the browser.
 - **Saved work missing:** check the browser and device, then restore your JSON backup.
 

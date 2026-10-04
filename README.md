@@ -19,10 +19,10 @@ Open **http://127.0.0.1:8000**. On macOS/Linux, create the environment with `pyt
 For browser-only operation without installing dependencies:
 
 ```powershell
-py -3 serve_frontend.py --port 8000
+py -3 serve_frontend.py
 ```
 
-This serves only the frontend, documentation, and notices. Some sources require the backend proxy; browser-only mode supports compatible sources and the explicit demonstration.
+This serves the frontend, documentation, and notices on **http://127.0.0.1:8765**. If that port is occupied or blocked, it prints an available alternative. Use --port 0 to let the OS choose. For AI and all sources, open the backend's URL instead.
 
 ## Research workflow
 
@@ -52,6 +52,6 @@ In-app **Help** provides searchable tips and all documentation. See [Help](HELP.
 
 Run `python -m unittest discover -s tests -v` using the virtual environment's Python. CI checks the backend on Python 3.9 and 3.12.
 
-Verified with 30 automated tests and browser checks of live searches, saved briefs, exports, and mobile layouts. Live AI generation requires your key.
+Verified with 37 automated tests and browser checks of live searches, saved briefs, exports, and mobile layouts. Live AI generation requires your key.
 
 If a source fails, inspect its coverage status and retry; an empty result is different from failed retrieval. If AI fails, check `.env`, model access, and connection status. Restart the backend after configuration changes. Back up saved work before clearing browser storage.
