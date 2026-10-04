@@ -1,5 +1,10 @@
 # Releases
 
+## UI refinement
+
+- Search, More actions, and Suggest research directions share a compact row; the toolbar stays visible below sources while scrolling.
+- Stronger silver gradients and graphite edges throughout the workspace. Sources have a distinct metallic frame, clearer selected colors, concise desktop descriptions, and a visible mobile heading.
+
 ## Windows installer for V1.0
 
 - Self-contained x64 Windows 10/11 installer with bundled Python/runtime dependencies, per-user installation, Start menu/desktop shortcuts, and uninstall registration.

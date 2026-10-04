@@ -31,7 +31,7 @@ const pageErrors=[];
 async function scenario(name,options,run){
   const context=await browser.newContext({viewport:options.viewport||{width:1365,height:950},reducedMotion:'reduce'});
   const page=await context.newPage();page.on('pageerror',e=>pageErrors.push(name+': '+e.message));
-  const calls={guidance:[],api:[],queries:[]};
+  const calls={guidance:[],api:[],queries:[],actions:[]};
   await page.route('**/api/**',async route=>{
     const req=route.request(),url=new URL(req.url());calls.api.push(url.pathname);
     const json=async body=>route.fulfill({contentType:'application/json',body:JSON.stringify(body)});
@@ -47,6 +47,7 @@ async function scenario(name,options,run){
     }
     if(url.pathname==='/api/ai'){
       const payload=req.postDataJSON();
+      calls.actions.push(payload.action);
       if(payload.action!=='guidance')return json({text:'Fixture explanation [pubmed:123456].',citations:[record],candidate_questions:[candidate],model:'gpt-6.1-sol'});
       calls.guidance.push(payload);
       if(options.delay)await new Promise(resolve=>setTimeout(resolve,options.delay(payload,calls.guidance.length)));
@@ -70,12 +71,18 @@ async function scenario(name,options,run){
 (async()=>{
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));base='http://127.0.0.1:'+server.address().port;
   browser=await chromium.launch({headless:true});fs.mkdirSync(path.join(root,'test-results'),{recursive:true});
-  for(const width of [1365,390,320])await scenario('compact layout and sticky controls '+width,{count:8,viewport:{width,height:950}},async({page,search,guided})=>{
+  for(const width of [1365,390,320])await scenario('compact layout and sticky controls '+width,{count:8,viewport:{width,height:950}},async({page,calls,search,guided})=>{
     assert.equal(await page.locator('#ai-connection-panel').count(),0);
     assert.equal(await page.locator('#connection-label').textContent(),'AI connected to GPT-6.1 Sol · key verified.');
     const position=await page.evaluate(()=>({source:document.querySelector('#source-strip').getBoundingClientRect().bottom,search:document.querySelector('.search-surface').getBoundingClientRect().top}));
     assert.ok(position.source<=position.search,'Sources above search');
     await search('ovarian aging');await guided();
+    assert.equal(await page.locator('#source-list-label').isVisible(),true,'Sources heading stays visible on mobile');
+    const controls=await page.evaluate(()=>['search-button','research-more','suggest-questions'].map(id=>{
+      const r=document.getElementById(id).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};
+    }));
+    assert.ok(controls[0].right<=controls[1].left&&controls[1].right<=controls[2].left,'Search, More actions, then Suggest research directions');
+    assert.ok(Math.max(...controls.map(r=>r.top))<Math.min(...controls.map(r=>r.bottom)),'Actions share a row');
     assert.equal(await page.locator('#search-button').getAttribute('class'),'');
     assert.ok((await page.locator('#suggest-questions').getAttribute('class')).includes('primary'));
     assert.equal(await page.locator('#make-question').isVisible(),false);
@@ -86,6 +93,11 @@ async function scenario(name,options,run){
     assert.ok(dock.source.top>=0&&dock.source.top<=13);assert.ok(dock.actions.top>=dock.source.bottom);
     await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(root,'test-results','v1-'+width+'.png'),fullPage:true});
     if(width<650){assert.equal(await page.locator('#connection-short-label').isVisible(),true);await page.locator('#connection-button').click();assert.match(await page.locator('#ai-setup-note').textContent(),/gpt-6.1-sol.*key verified/);}
+    if(width===1365){
+      await page.locator('#suggest-questions').click();await page.waitForFunction(()=>!document.querySelector('#ai-output').hidden);
+      assert.ok(calls.actions.includes('questions'),'Directions still invokes AI');
+      assert.equal(calls.queries.length,1,'Directions does not submit the search form');
+    }
   });
   await scenario('guidance cache, changed context and no keystroke calls',{},async({page,calls,search,guided})=>{
     await search('ovarian aging');await guided();assert.equal(calls.guidance.length,1);
