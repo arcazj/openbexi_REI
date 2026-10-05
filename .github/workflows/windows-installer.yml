@@ -40,7 +40,7 @@ jobs:
         with:
           name: REI-Windows-x64-Installer
           path: |
-            dist/REIResearchExplorer-1.0.0-Windows-x64-Setup.exe
+            dist/REIResearchExplorer-1.0.1-Windows-x64-Setup.exe
             dist/SHA256SUMS-Windows.txt
           if-no-files-found: error
           retention-days: 30

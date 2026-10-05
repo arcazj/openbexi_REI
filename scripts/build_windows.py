@@ -13,7 +13,7 @@ import sys
 
 from scripts.build_pages import DOCUMENTS
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -152,7 +152,7 @@ def build():
     directories = sorted((p for p in bundle.rglob("*") if p.is_dir()), key=lambda p: len(p.parts), reverse=True)
     lines += ['RMDir "$INSTDIR\\' + str(p.relative_to(bundle)).replace('$', '$$') + '"' for p in directories]
     uninstall.write_text("\n".join(lines) + "\n", encoding="utf-8-sig")
-    setup = safe_output(ROOT / "dist" / "REIResearchExplorer-1.0.0-Windows-x64-Setup.exe")
+    setup = safe_output(ROOT / "dist" / f"REIResearchExplorer-{VERSION}-Windows-x64-Setup.exe")
     setup.parent.mkdir(exist_ok=True)
     subprocess.run([str(compiler), "/DBUNDLE=" + str(bundle), "/DOUTPUT=" + str(setup), "/DICON=" + str(icon),
                     "/DUNINSTALL_FILES=" + str(uninstall), "/DVERSION=" + VERSION, str(ROOT / "installer" / "windows.nsi")], check=True)

@@ -35,15 +35,18 @@ async function scenario(name,options,run){
   await page.route('**/api/**',async route=>{
     const req=route.request(),url=new URL(req.url());calls.api.push(url.pathname);
     const json=async body=>route.fulfill({contentType:'application/json',body:JSON.stringify(body)});
-    if(url.pathname==='/api/health')return json({version:'1.0.0',ai:{configured:options.connected!==false,model:'gpt-6.1-sol'}});
+    if(url.pathname==='/api/health')return json({version:'1.0.1',ai:{configured:options.connected!==false,model:'gpt-6.1-sol'}});
     if(url.pathname==='/api/ai/check')return json({accessible:true,model:'gpt-6.1-sol',message:'Fixture access verified'});
     if(url.pathname==='/api/search'){
       const payload=req.postDataJSON();calls.queries.push(payload.query);
-      const records=options.empty?[]:Array.from({length:options.count||1},(_,i)=>({...record,id:'pubmed:'+(123456+i),url:'https://pubmed.ncbi.nlm.nih.gov/'+(123456+i)+'/'}));
+      const records=options.empty?[]:options.mixed?[record,
+        {...record,id:'ensembl:fixture',source:'ensembl',type:'gene',title:'Fixture gene annotation',url:'https://www.ensembl.org/'},
+        {...record,id:'gwas:fixture',source:'gwas',type:'association',title:'Fixture trait association',url:'https://www.ebi.ac.uk/gwas/'}
+      ]:Array.from({length:options.count||1},(_,i)=>({...record,id:'pubmed:'+(123456+i),url:'https://pubmed.ncbi.nlm.nih.gov/'+(123456+i)+'/'}));
       return json({query:payload.query,records,demo:false,
         interpretation:{type:'topic',term:payload.query},retrieved_at:'2026-10-04T12:00:00Z',
-        coverage:payload.sources.map(source=>({source,status:source==='pubmed'?'ok':'skipped',total:source==='pubmed'?records.length:null,
-          retrieved:source==='pubmed'?records.length:0,truncated:false,query:payload.query,retrieved_at:'2026-10-04T12:00:00Z'}))});
+        coverage:payload.sources.map(source=>({source,status:source==='pubmed'||options.mixed?'ok':'skipped',total:source==='pubmed'||options.mixed?records.filter(r=>r.source===source).length:null,
+          retrieved:records.filter(r=>r.source===source).length,truncated:false,query:payload.query,retrieved_at:'2026-10-04T12:00:00Z'}))});
     }
     if(url.pathname==='/api/ai'){
       const payload=req.postDataJSON();
@@ -74,6 +77,13 @@ async function scenario(name,options,run){
   for(const width of [1365,390,320])await scenario('compact layout and sticky controls '+width,{count:8,viewport:{width,height:950}},async({page,calls,search,guided})=>{
     assert.equal(await page.locator('#ai-connection-panel').count(),0);
     assert.equal(await page.locator('#connection-label').textContent(),'AI connected to GPT-6.1 Sol · key verified.');
+    assert.equal(await page.locator('#app-version').textContent(),'V1.0.1');
+    const version=await page.locator('#app-version').boundingBox(),settings=await page.locator('#ai-connect-action').boundingBox();
+    assert.ok(version.x>=settings.x+settings.width,'Version follows AI settings');
+    assert.ok(version.y<settings.y+settings.height&&settings.y<version.y+version.height,'Version shares the AI settings row');
+    const tip=await page.locator('#context-tip').evaluate(n=>({radius:getComputedStyle(n).borderRadius,border:getComputedStyle(n).borderTopWidth}));
+    assert.equal(tip.radius,await page.locator('#guidance-card').evaluate(n=>getComputedStyle(n).borderRadius));
+    assert.equal(tip.border,'1px');
     const position=await page.evaluate(()=>({source:document.querySelector('#source-strip').getBoundingClientRect().bottom,search:document.querySelector('.search-surface').getBoundingClientRect().top}));
     assert.ok(position.source<=position.search,'Sources above search');
     await search('ovarian aging');await guided();
@@ -99,6 +109,23 @@ async function scenario(name,options,run){
       assert.equal(calls.queries.length,1,'Directions does not submit the search form');
     }
   });
+  await scenario('source palettes stay consistent from selection to evidence',{mixed:true},async({page,search,guided})=>{
+    await search('ovarian aging');await guided();
+    const palettes=[];
+    for(const source of ['pubmed','ensembl','gwas']){
+      const selected=await page.locator('.source-chip[data-source="'+source+'"]').evaluate(n=>({background:getComputedStyle(n).backgroundImage,border:getComputedStyle(n).borderColor}));
+      const card=page.locator('.record[data-source="'+source+'"]');
+      assert.equal(await card.count(),1);
+      assert.equal(await card.evaluate(n=>getComputedStyle(n).borderColor),selected.border);
+      assert.equal(await card.locator('.tag[data-source]').evaluate(n=>getComputedStyle(n).backgroundImage),selected.background);
+      assert.equal(await page.locator('.coverage-item[data-source="'+source+'"]').evaluate(n=>getComputedStyle(n).backgroundImage),selected.background);
+      palettes.push(selected.background);
+    }
+    assert.equal(new Set(palettes).size,3,'Each source has its own color');
+    assert.notEqual(await page.locator('#evidence-area').evaluate(n=>getComputedStyle(n).backgroundImage),await page.locator('.record').first().evaluate(n=>getComputedStyle(n).backgroundImage));
+    await page.locator('.record[data-source="pubmed"] h3 button').click();
+    assert.equal(await page.locator('#detail-body .tag[data-source="pubmed"]').evaluate(n=>getComputedStyle(n).backgroundImage),palettes[0]);
+  });
   await scenario('guidance cache, changed context and no keystroke calls',{},async({page,calls,search,guided})=>{
     await search('ovarian aging');await guided();assert.equal(calls.guidance.length,1);
     await page.locator('#query').fill('different topic');assert.equal(calls.guidance.length,1);assert.match(await page.locator('#guidance-phase').textContent(),/search again/);
@@ -118,7 +145,7 @@ async function scenario(name,options,run){
     assert.match(await page.locator('#brief-notes').inputValue(),/AI next step/);
     await page.locator('#brief-form button[type=submit]').click();await guided();
     const workspace=await page.evaluate(()=>JSON.parse(localStorage.getItem('rei-research-workspace-v1')));
-    assert.equal(workspace.app_version,'1.0.0');assert.equal(workspace.questions[0].ai_audit.action,'guidance');
+    assert.equal(workspace.app_version,'1.0.1');assert.equal(workspace.questions[0].ai_audit.action,'guidance');
     assert.equal(workspace.questions[0].guidance_audits.length,1);assert.equal(workspace.questions[0].guidance_audits[0].evidence_snapshot.records[0].id,record.id);
     await page.locator('#guidance-query').click();await guided();assert.equal(calls.queries.at(-1),'ovarian reserve outcomes');
   });

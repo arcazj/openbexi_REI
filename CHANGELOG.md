@@ -1,9 +1,12 @@
 # Releases
 
-## UI refinement
+## V1.0.1 — 2026-10-04
 
 - Search, More actions, and Suggest research directions share a compact row; the toolbar stays visible below sources while scrolling.
 - Stronger silver gradients and graphite edges throughout the workspace. Sources have a distinct metallic frame, clearer selected colors, concise desktop descriptions, and a visible mobile heading.
+- Tip text in a rounded card matching research guidance; a stronger silver-blue background separates Source evidence from its records.
+- Consistent source palettes in selectors, coverage, evidence cards, and detail badges: green PubMed, blue Ensembl, and lavender GWAS Catalog.
+- V1.0.1 after AI settings; application metadata, exports, and the bundled Windows installer use version 1.0.1. Existing saved research remains compatible.
 
 ## Windows installer for V1.0
 

@@ -11,6 +11,8 @@ import time
 import urllib.error
 import urllib.request
 
+from scripts.build_windows import VERSION
+
 
 def wait_for(callback, timeout=30):
     end = time.monotonic() + timeout
@@ -21,7 +23,7 @@ def wait_for(callback, timeout=30):
     raise AssertionError("The installer/app did not complete the expected transition.")
 
 
-def smoke(setup, test_tray=False):
+def smoke(setup, test_tray=False, previous_setup=None):
     if os.name != "nt":
         raise RuntimeError("Installer checks require Windows.")
     import winreg
@@ -53,10 +55,10 @@ def smoke(setup, test_tray=False):
         def run(arguments, timeout=60):
             return subprocess.run(arguments, env=environment, timeout=timeout, check=True,
                                   creationflags=subprocess.CREATE_NO_WINDOW)
-        def install_package():
+        def install_package(package=setup):
             # NSIS requires its final /D argument without quotes, even for spaces.
             # Pass the exact native command line, with no shell involved.
-            run(subprocess.list2cmdline([str(setup), "/S"]) + " /D=" + str(install))
+            run(subprocess.list2cmdline([str(package), "/S"]) + " /D=" + str(install))
         def start():
             return subprocess.Popen([str(executable), "--no-browser" if test_tray else "--headless", "--data-dir", str(private)],
                                     env=environment, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -71,8 +73,21 @@ def smoke(setup, test_tray=False):
         def get(path):
             settings = json.loads((private / "desktop.json").read_text(encoding="utf-8"))
             return opener.open("http://127.0.0.1:" + str(settings["port"]) + path, timeout=5)
+        def verify_current_version():
+            manifest = json.loads((install / "BUILD-INFO.json").read_text(encoding="utf-8"))
+            assert manifest["version"] == VERSION
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_name) as key:
+                assert winreg.QueryValueEx(key, "DisplayVersion")[0] == VERSION
+            with get("/api/health") as response:
+                assert json.load(response)["version"] == VERSION
+            with get("/") as response:
+                html = response.read().decode("utf-8")
+                assert 'id="app-version"' in html and ">V" + VERSION + "</span>" in html
+                assert 'id="context-tip" class="side-card tip"' in html
+                assert "#evidence-area{min-width:0;padding:16px" in html
+                assert ".record[data-source]" in html
         try:
-            install_package()
+            install_package(previous_setup or setup)
             wait_for(executable.is_file)
             assert (install / "Uninstall.exe").is_file()
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_name) as key:
@@ -83,6 +98,8 @@ def smoke(setup, test_tray=False):
             if test_tray:
                 time.sleep(1)
                 assert process.poll() is None, "Native tray initialization failed."
+            if previous_setup is None:
+                verify_current_version()
             initial = json.loads((private / "desktop.json").read_text(encoding="utf-8"))
             with get("/") as response:
                 assert b"Make the next step useful" in response.read()
@@ -119,6 +136,7 @@ def smoke(setup, test_tray=False):
             assert user_file.read_text(encoding="utf-8") == "Keep this user file."
             process = start()
             wait_for(ready)
+            verify_current_version()
             with get("/api/health") as response:
                 text = response.read().decode()
                 assert json.loads(text)["ai"]["configured"] is True
@@ -135,7 +153,7 @@ def smoke(setup, test_tray=False):
                     raise AssertionError("Uninstall registration was left behind.")
             except FileNotFoundError:
                 pass
-            print("Windows installer checks passed: install, shortcuts, bundled runtime without Python on PATH, singleton, private key setup, restart, upgrade, and uninstall preserving user data.")
+            print("Windows installer " + VERSION + " checks passed: install, current UI/version, shortcuts, bundled runtime without Python on PATH, singleton, private key setup, restart, upgrade, and uninstall preserving user data.")
         finally:
             if process and process.poll() is None:
                 if executable.is_file():
@@ -148,7 +166,8 @@ def smoke(setup, test_tray=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--installer", type=Path, default=Path("dist/REIResearchExplorer-1.0.0-Windows-x64-Setup.exe"))
+    parser.add_argument("--installer", type=Path, default=Path(f"dist/REIResearchExplorer-{VERSION}-Windows-x64-Setup.exe"))
     parser.add_argument("--tray", action="store_true", help="Also verify the native tray in an interactive Windows desktop session.")
+    parser.add_argument("--previous-installer", type=Path, help="Start with an earlier installer and verify upgrading it to the current package.")
     options = parser.parse_args()
-    smoke(options.installer.resolve(), options.tray)
+    smoke(options.installer.resolve(), options.tray, options.previous_installer.resolve() if options.previous_installer else None)

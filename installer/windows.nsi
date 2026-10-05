@@ -11,7 +11,7 @@ Unicode True
   !error "Installer output path is required."
 !endif
 !ifndef VERSION
-  !define VERSION "1.0.0"
+  !define VERSION "1.0.1"
 !endif
 
 Name "REI Research Explorer"
@@ -20,8 +20,8 @@ InstallDir "$LOCALAPPDATA\Programs\REIResearchExplorer"
 InstallDirRegKey HKCU "Software\openbexi\REIResearchExplorer" "InstallPath"
 RequestExecutionLevel user
 SetCompressor /SOLID zlib
-BrandingText "REI Research Explorer · V1.0"
-VIProductVersion "1.0.0.0"
+BrandingText "REI Research Explorer · V${VERSION}"
+VIProductVersion "${VERSION}.0"
 VIAddVersionKey "ProductName" "REI Research Explorer"
 VIAddVersionKey "ProductVersion" "${VERSION}"
 VIAddVersionKey "FileVersion" "${VERSION}"

@@ -1,4 +1,4 @@
-REI Research Explorer V1.0 — Windows
+REI Research Explorer V1.0.1 — Windows
 
 Requires Windows 10 or 11, 64-bit, a modern browser, and internet for live data.
 The installer includes Python and dependencies. No administrator access or API key
