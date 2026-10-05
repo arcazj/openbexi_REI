@@ -101,12 +101,15 @@ dialog{background:#f7f9fc;border-color:#c4d1dd;box-shadow:0 20px 70px #253e582b}
 #suggest-questions.primary:hover,#connection-button[data-state='ready']:hover{background:var(--orange-grey-hover);border-color:#7b614d;color:#352416}
 #suggest-questions:disabled{background:linear-gradient(#edf0f3,#d6dee5);border-color:#aebbc8;color:#516171;box-shadow:inset 0 1px 0 #fff9}
 @media(max-width:650px){.search-options .interpret-organism,.search-options .interpret-organism+span{display:inline}.search-options .examples{flex-basis:100%;gap:4px}.search-options .examples button{font-size:10px;padding:5px 7px}.search-options .examples>span{font-size:10px}#recent{gap:3px;font-size:10px}#recent button{font-size:10px}}
-/* A slightly taller search field keeps its thin green outline at rest and on hover. */
-.search-surface,.search-surface:hover{padding:16px 15px;border-color:#6b927b;border-width:1px}
+/* The query input keeps a thin green line; hover/focus add an inset line without moving it. */
+.search-surface,.search-surface:hover{padding:12px 15px;border-color:#91a6b8;border-width:1px}
+.query{min-height:46px;padding:10px 12px;border:1px solid #6b927b;border-radius:9px;background:linear-gradient(#fbfdfc,#f0f5f3);box-shadow:inset 0 1px 2px #344a6106;outline:none}
+.query:hover,.query:focus{border-color:#467759;box-shadow:inset 0 0 0 1px #467759}
+.query:focus-visible{outline:3px solid #bfd8c8;outline-offset:2px;border-radius:9px}
 #recent{padding-left:var(--explore-start,0px);padding-right:16px;justify-content:flex-start}#recent>span{flex:none}
 .search-options #mode{background:linear-gradient(#637481,#475764 52%,#35434f);border-color:#40515e;color:#fff;box-shadow:inset 0 1px 0 #ffffff59,0 2px 3px #344a611a}
 .search-options #mode:hover{background:linear-gradient(#526674,#334655);border-color:#293f50}#mode option{background:#fff;color:var(--ink)}
-@media(max-width:650px){.search-surface,.search-surface:hover{padding:12px 10px}#recent{padding-right:11px}}
+@media(max-width:650px){.search-surface,.search-surface:hover{padding:10px}.query{min-height:44px;padding:9px 10px}#recent{padding-right:11px}}
 </style>
 </head>
 <body>

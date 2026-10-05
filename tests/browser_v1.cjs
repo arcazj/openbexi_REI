@@ -84,6 +84,17 @@ async function scenario(name,options,run){
     const tip=await page.locator('#context-tip').evaluate(n=>({radius:getComputedStyle(n).borderRadius,border:getComputedStyle(n).borderTopWidth}));
     assert.equal(tip.radius,await page.locator('#guidance-card').evaluate(n=>getComputedStyle(n).borderRadius));
     assert.equal(tip.border,'1px');
+    const field=page.locator('#query');
+    await page.mouse.move(0,0);
+    const fieldSize=await field.boundingBox(),defaultLine=await field.evaluate(n=>({border:getComputedStyle(n).borderTopWidth,shadow:getComputedStyle(n).boxShadow}));
+    assert.equal(defaultLine.border,'1px','Query has a thin line by default');assert.ok(fieldSize.height>=44);
+    await field.hover();
+    assert.notEqual(await field.evaluate(n=>getComputedStyle(n).boxShadow),defaultLine.shadow,'Hover thickens the query line');
+    await field.click();await page.mouse.move(0,0);
+    assert.notEqual(await field.evaluate(n=>getComputedStyle(n).boxShadow),defaultLine.shadow,'Focus keeps the thicker line');
+    const focusedSize=await field.boundingBox();
+    assert.equal(focusedSize.width,fieldSize.width);assert.equal(focusedSize.height,fieldSize.height,'Focus does not shift the field');
+    await field.evaluate(n=>n.blur());
     const position=await page.evaluate(()=>({source:document.querySelector('#source-strip').getBoundingClientRect().bottom,search:document.querySelector('.search-surface').getBoundingClientRect().top}));
     assert.ok(position.source<=position.search,'Sources above search');
     await search('ovarian aging');await guided();
