@@ -7,6 +7,8 @@
 - Tip text in a rounded card matching research guidance; a stronger silver-blue background separates Source evidence from its records.
 - Consistent source palettes in selectors, coverage, evidence cards, and detail badges: green PubMed, blue Ensembl, and lavender GWAS Catalog.
 - V1.0.1 after AI settings; application metadata, exports, and the bundled Windows installer use version 1.0.1. Existing saved research remains compatible.
+- Explore presets sit on the right of Human / Auto-detect; presets and Auto-detect share grey metallic styling. Recent stays outside the search panel, with Recent: directly below Explore:. The slightly taller panel keeps a thin green border on hover. Suggest research directions and verified AI status share an orange-grey palette with dark readable text.
+- The Windows workflow verifies fresh installation and upgrading the published V1.0 installer, including settings preservation and current UI/version checks.
 
 ## Windows installer for V1.0
 

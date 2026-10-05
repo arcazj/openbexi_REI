@@ -88,6 +88,16 @@ async function scenario(name,options,run){
     assert.ok(position.source<=position.search,'Sources above search');
     await search('ovarian aging');await guided();
     assert.equal(await page.locator('#source-list-label').isVisible(),true,'Sources heading stays visible on mobile');
+    const presets=page.locator('.search-options .examples');
+    assert.equal(await presets.count(),1,'Explore shares the Human / Auto-detect section');
+    assert.equal(await page.locator('.search-surface #recent').count(),0,'Recent is outside the search panel');
+    assert.equal(await presets.locator('span').textContent(),'Explore:');
+    const exploreLabel=await presets.locator('span').boundingBox(),recentLabel=await page.locator('#recent>span').boundingBox();
+    assert.ok(Math.abs(exploreLabel.x-recentLabel.x)<=2,'Recent: starts directly beneath Explore:');
+    assert.ok(recentLabel.y>=exploreLabel.y+exploreLabel.height,'Recent is below Explore');
+    await page.mouse.move(0,0);
+    assert.equal(await page.locator('#suggest-questions').evaluate(n=>getComputedStyle(n).backgroundImage),await page.locator('#connection-button').evaluate(n=>getComputedStyle(n).backgroundImage),'AI status and directions share the orange-grey palette');
+    assert.equal(await page.locator('#mode').evaluate(n=>getComputedStyle(n).backgroundImage),await presets.locator('button').first().evaluate(n=>getComputedStyle(n).backgroundImage),'Auto-detect matches the grey presets');
     const controls=await page.evaluate(()=>['search-button','research-more','suggest-questions'].map(id=>{
       const r=document.getElementById(id).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};
     }));
@@ -111,6 +121,7 @@ async function scenario(name,options,run){
   });
   await scenario('source palettes stay consistent from selection to evidence',{mixed:true},async({page,search,guided})=>{
     await search('ovarian aging');await guided();
+    await page.mouse.move(0,0);
     const palettes=[];
     for(const source of ['pubmed','ensembl','gwas']){
       const selected=await page.locator('.source-chip[data-source="'+source+'"]').evaluate(n=>({background:getComputedStyle(n).backgroundImage,border:getComputedStyle(n).borderColor}));
