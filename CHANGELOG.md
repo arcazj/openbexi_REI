@@ -8,7 +8,7 @@
 - Consistent source palettes in selectors, coverage, evidence cards, and detail badges: green PubMed, blue Ensembl, and lavender GWAS Catalog.
 - V1.0.1 after AI settings; application metadata, exports, and the bundled Windows installer use version 1.0.1. Existing saved research remains compatible.
 - Explore presets sit on the right of Human / Auto-detect; presets and Auto-detect share grey metallic styling. Recent stays outside the search panel, with Recent: directly below Explore:. The taller query input has a thin green line that thickens on hover/focus without shifting the layout. Suggest research directions and verified AI status share an orange-grey palette with dark readable text.
-- AI-generated guidance, tips, explanations, and proposed questions use a softer orange-grey surface, including AI-assisted brief editing, saved briefs, and comparisons. Saved AI-assisted briefs have an explicit label.
+- AI-generated guidance, tips, explanations, and proposed questions use a softer orange-grey surface, including AI-assisted brief editing, saved briefs, and comparisons. Saved AI-assisted briefs have an explicit label; the introduction explains that orange backgrounds indicate AI suggestions.
 - The Windows workflow verifies fresh installation and upgrading the published V1.0 installer, including settings preservation and current UI/version checks.
 
 ## Windows installer for V1.0
