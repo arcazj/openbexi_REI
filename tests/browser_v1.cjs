@@ -99,6 +99,8 @@ async function scenario(name,options,run){
     assert.ok(position.source<=position.search,'Sources above search');
     await search('ovarian aging');await guided();
     assert.equal(await page.locator('#source-list-label').isVisible(),true,'Sources heading stays visible on mobile');
+    const aiSurface=await page.locator('#guidance-card').evaluate(n=>getComputedStyle(n).backgroundImage);
+    assert.equal(await page.locator('#context-tip').evaluate(n=>getComputedStyle(n).backgroundImage),aiSurface,'AI tip and next step share the soft surface');
     const presets=page.locator('.search-options .examples');
     assert.equal(await presets.count(),1,'Explore shares the Human / Auto-detect section');
     assert.equal(await page.locator('.search-surface #recent').count(),0,'Recent is outside the search panel');
@@ -108,6 +110,7 @@ async function scenario(name,options,run){
     assert.ok(recentLabel.y>=exploreLabel.y+exploreLabel.height,'Recent is below Explore');
     await page.mouse.move(0,0);
     assert.equal(await page.locator('#suggest-questions').evaluate(n=>getComputedStyle(n).backgroundImage),await page.locator('#connection-button').evaluate(n=>getComputedStyle(n).backgroundImage),'AI status and directions share the orange-grey palette');
+    assert.notEqual(aiSurface,await page.locator('#suggest-questions').evaluate(n=>getComputedStyle(n).backgroundImage),'AI text uses a softer surface than action buttons');
     assert.equal(await page.locator('#mode').evaluate(n=>getComputedStyle(n).backgroundImage),await presets.locator('button').first().evaluate(n=>getComputedStyle(n).backgroundImage),'Auto-detect matches the grey presets');
     const controls=await page.evaluate(()=>['search-button','research-more','suggest-questions'].map(id=>{
       const r=document.getElementById(id).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};
@@ -128,6 +131,8 @@ async function scenario(name,options,run){
       await page.locator('#suggest-questions').click();await page.waitForFunction(()=>!document.querySelector('#ai-output').hidden);
       assert.ok(calls.actions.includes('questions'),'Directions still invokes AI');
       assert.equal(calls.queries.length,1,'Directions does not submit the search form');
+      assert.equal(await page.locator('#ai-output .ai-box').evaluate(n=>getComputedStyle(n).backgroundImage),aiSurface);
+      assert.equal(await page.locator('#ai-output .candidate').evaluate(n=>getComputedStyle(n).backgroundImage),aiSurface);
     }
   });
   await scenario('source palettes stay consistent from selection to evidence',{mixed:true},async({page,search,guided})=>{
@@ -161,6 +166,8 @@ async function scenario(name,options,run){
   await scenario('save proposal, add note and preserve both audits',{},async({page,calls,search,guided})=>{
     await search('ovarian aging');await guided();await page.locator('#guidance-save').click();
     assert.equal(await page.locator('#brief-question').inputValue(),candidate.question);
+    const aiSurface=await page.locator('#guidance-card').evaluate(n=>getComputedStyle(n).backgroundImage);
+    assert.equal(await page.locator('#brief-question').evaluate(n=>getComputedStyle(n).backgroundImage),aiSurface,'AI-generated brief is highlighted while editing');
     await page.locator('#brief-form button[type=submit]').click();await guided();
     assert.equal(calls.guidance.at(-1).questions[0].question,candidate.question);
     await page.locator('#guidance-add').click();await page.locator('#next-step-briefs button').filter({hasText:candidate.title}).click();
@@ -169,6 +176,7 @@ async function scenario(name,options,run){
     const workspace=await page.evaluate(()=>JSON.parse(localStorage.getItem('rei-research-workspace-v1')));
     assert.equal(workspace.app_version,'1.0.1');assert.equal(workspace.questions[0].ai_audit.action,'guidance');
     assert.equal(workspace.questions[0].guidance_audits.length,1);assert.equal(workspace.questions[0].guidance_audits[0].evidence_snapshot.records[0].id,record.id);
+    assert.equal(await page.locator('.saved-card[data-ai-assisted="true"]').evaluate(n=>getComputedStyle(n).backgroundImage),aiSurface,'Saved AI-assisted question keeps the soft surface');
     await page.locator('#guidance-query').click();await guided();assert.equal(calls.queries.at(-1),'ovarian reserve outcomes');
   });
   await scenario('automatic guidance off and explicit refresh',{},async({page,calls,search,guided})=>{
